@@ -28,18 +28,28 @@
                     <label class="block text-xs uppercase text-cyan-400 mb-1">Target Email</label>
                     <input type="email" id="userEmail" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400" placeholder="your-email@gmail.com">
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-cyan-400 mb-1">Delivery Date</label>
-                    <input type="date" id="sendDate" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase text-cyan-400 mb-1">Delivery Date</label>
+                        <input type="date" id="sendDate" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-cyan-400 mb-1">Delivery Time</label>
+                        <input type="time" id="sendTime" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+                    </div>
                 </div>
+
                 <div>
                     <label class="block text-xs uppercase text-cyan-400 mb-1">Message</label>
                     <textarea id="message" required rows="4" class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 resize-none" placeholder="ভবিষ্যতের নিজের উদ্দেশ্যে কিছু লিখুন..."></textarea>
                 </div>
+
                 <button type="submit" id="submitBtn" class="w-full neon-btn text-white font-bold py-2.5 rounded uppercase text-sm tracking-wider">
                     Lock Capsule
                 </button>
             </form>
+
             <div id="statusOverlay" class="hidden absolute inset-0 bg-[#0a0a16] flex flex-col items-center justify-center p-4 text-center">
                 <i class="fa-solid fa-circle-check text-green-400 text-4xl mb-2 animate-bounce"></i>
                 <h3 class="text-lg font-bold text-white mb-1">CAPSULE SECURED!</h3>
@@ -49,11 +59,19 @@
         </div>
     </main>
 
-    <footer class="w-full max-w-xl mx-auto text-center my-6">
-        <div class="text-cyan-500/40 text-xs tracking-[0.3em] font-bold mb-2">
+    <footer class="w-full max-w-xl mx-auto text-center my-6 space-y-2">
+        <div class="text-cyan-500/40 text-xs tracking-[0.3em] font-bold">
             ⚙️ ─── 💾 ─── 🔑 ─── ⏳ ─── 🔒 ─── 🛰️
         </div>
-        <p class="text-[10px] text-gray-600">&copy; 2026 CSM Neural Core.</p>
+        
+        <div class="text-xs tracking-wide">
+            <span class="text-gray-500">Developed with 💜 by</span> 
+            <a href="https://github.com/sendfuture" target="_blank" class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-bold hover:text-cyan-300 transition-all duration-300 shadow-sm">
+                সিএসএম মহসিন আলম
+            </a>
+        </div>
+
+        <p class="text-[10px] text-gray-600">&copy; 2026 CSM Neural Core. All rights reserved.</p>
     </footer>
 
     <script type="module">
@@ -86,17 +104,22 @@
 
             const email = document.getElementById('userEmail').value;
             const sendDate = document.getElementById('sendDate').value;
+            const sendTime = document.getElementById('sendTime').value;
+            
+            // Extract only the hour part (e.g., "14:30" becomes "14") for the hourly cron system
+            const sendHour = sendTime.split(':')[0]; 
             const message = document.getElementById('message').value;
 
             try {
                 await addDoc(collection(db, "letters"), {
                     email: email,
                     sendDate: sendDate,
-                    message: message,
+                    sendTime: sendTime,
+                    sendHour: sendHour,
                     isSent: false,
                     createdAt: serverTimestamp()
                 });
-                statusDesc.innerText = `চিঠিটি সেভ হয়েছে। এটি ${sendDate} তারিখে মেইলে পাঠানো হবে।`;
+                statusDesc.innerText = `চিঠিটি সেভ হয়েছে। এটি ${sendDate} তারিখে ঠিক ${sendTime} ঘটিকায় মেইলে পাঠানো হবে।`;
                 overlay.classList.remove('hidden');
             } catch (error) {
                 alert("Error: " + error.message);
