@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSM | Time Capsule</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
+        body { font-family: 'Fira Code', monospace; background-color: #0a0a16; }
+        .neon-box { box-shadow: 0 0 15px rgba(5, 213, 250, 0.2); border: 1px solid rgba(5, 213, 250, 0.3); }
+        .neon-btn { background: linear-gradient(135deg, #05d5fa 0%, #a200ff 100%); }
+    </style>
+</head>
+<body class="text-gray-300 min-h-screen flex flex-col justify-between p-4">
+
+    <header class="w-full max-w-xl mx-auto text-center my-6">
+        <h1 class="text-2xl font-bold text-cyan-400 tracking-wider"><i class="fa-solid fa-vault"></i> TIME_CAPSULE</h1>
+    </header>
+
+    <main class="w-full max-w-xl mx-auto flex-grow flex items-center">
+        <div class="neon-box bg-[#0f0f23] rounded-xl p-6 w-full relative overflow-hidden">
+            <h2 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-paper-plane text-purple-400"></i> ভবিষ্যতের কাছে চিঠি</h2>
+            
+            <form id="capsuleForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase text-cyan-400 mb-1">Target Email</label>
+                    <input type="email" id="userEmail" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400" placeholder="your-email@gmail.com">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-cyan-400 mb-1">Delivery Date</label>
+                    <input type="date" id="sendDate" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-cyan-400 mb-1">Message</label>
+                    <textarea id="message" required rows="4" class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 resize-none" placeholder="ভবিষ্যতের নিজের উদ্দেশ্যে কিছু লিখুন..."></textarea>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full neon-btn text-white font-bold py-2.5 rounded uppercase text-sm tracking-wider">
+                    Lock Capsule
+                </button>
+            </form>
+            <div id="statusOverlay" class="hidden absolute inset-0 bg-[#0a0a16] flex flex-col items-center justify-center p-4 text-center">
+                <i class="fa-solid fa-circle-check text-green-400 text-4xl mb-2 animate-bounce"></i>
+                <h3 class="text-lg font-bold text-white mb-1">CAPSULE SECURED!</h3>
+                <p id="statusDesc" class="text-xs text-gray-400 mb-4"></p>
+                <button id="resetBtn" class="border border-cyan-500/50 text-cyan-400 px-3 py-1 text-xs rounded">Write Another</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full max-w-xl mx-auto text-center my-6">
+        <div class="text-cyan-500/40 text-xs tracking-[0.3em] font-bold mb-2">
+            ⚙️ ─── 💾 ─── 🔑 ─── ⏳ ─── 🔒 ─── 🛰️
+        </div>
+        <p class="text-[10px] text-gray-600">&copy; 2026 CSM Neural Core.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Your Firebase Configuration Setup
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6kHlmaspoUf3PqZNy7w85OPxsAK6AbZ8",
+            authDomain: "sendfuture-adaa7.firebaseapp.com",
+            projectId: "sendfuture-adaa7",
+            storageBucket: "sendfuture-adaa7.firebasestorage.app",
+            messagingSenderId: "284618017221",
+            appId: "1:284618017221:web:912839031a30109110a3ac"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const form = document.getElementById('capsuleForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const overlay = document.getElementById('statusOverlay');
+        const statusDesc = document.getElementById('statusDesc');
+        const resetBtn = document.getElementById('resetBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Encrypting...";
+
+            const email = document.getElementById('userEmail').value;
+            const sendDate = document.getElementById('sendDate').value;
+            const message = document.getElementById('message').value;
+
+            try {
+                await addDoc(collection(db, "letters"), {
+                    email: email,
+                    sendDate: sendDate,
+                    message: message,
+                    isSent: false,
+                    createdAt: serverTimestamp()
+                });
+                statusDesc.innerText = `চিঠিটি সেভ হয়েছে। এটি ${sendDate} তারিখে মেইলে পাঠানো হবে।`;
+                overlay.classList.remove('hidden');
+            } catch (error) {
+                alert("Error: " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Lock Capsule";
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            form.reset();
+            overlay.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
