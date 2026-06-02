@@ -15,20 +15,24 @@
 </head>
 <body class="text-gray-300 min-h-screen flex flex-col justify-between p-4">
 
+    <!-- Header Section -->
     <header class="w-full max-w-xl mx-auto text-center my-6">
         <h1 class="text-2xl font-bold text-cyan-400 tracking-wider"><i class="fa-solid fa-vault"></i> TIME_CAPSULE</h1>
     </header>
 
+    <!-- Main Capsule Container -->
     <main class="w-full max-w-xl mx-auto flex-grow flex items-center">
         <div class="neon-box bg-[#0f0f23] rounded-xl p-6 w-full relative overflow-hidden">
             <h2 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-paper-plane text-purple-400"></i> ভবিষ্যতের কাছে চিঠি</h2>
             
             <form id="capsuleForm" class="space-y-4">
+                <!-- Target Email Input -->
                 <div>
                     <label class="block text-xs uppercase text-cyan-400 mb-1">Target Email</label>
                     <input type="email" id="userEmail" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400" placeholder="your-email@gmail.com">
                 </div>
                 
+                <!-- Date & Time Row -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs uppercase text-cyan-400 mb-1">Delivery Date</label>
@@ -40,16 +44,33 @@
                     </div>
                 </div>
 
+                <!-- Ready-made & Custom Templates Dropdown -->
                 <div>
-                    <label class="block text-xs uppercase text-cyan-400 mb-1">Message</label>
-                    <textarea id="message" required rows="4" class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 resize-none" placeholder="ভবিষ্যতের নিজের উদ্দেশ্যে কিছু লিখুন..."></textarea>
+                    <label class="block text-xs uppercase text-cyan-400 mb-1">Select Template</label>
+                    <select id="templateSelector" class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer">
+                        <option value="">-- নিজের মতো করে খালি বক্সে লিখুন --</option>
+                        <option value="birthday">🎂 Future Birthday to Me (জন্মদিনের বার্তা)</option>
+                        <option value="target">🎯 Future Target (লক্ষ্য ও ক্যারিয়ার ট্র্যাক)</option>
+                        <option value="crypto">🪙 Crypto & Wealth (ভবিষ্যতের সম্পদ ও ইনভেস্টমেন্ট)</option>
+                        <option value="love">❤️ Letter to My Future Soulmate (ভবিষ্যতের ভালোবাসার মানুষ)</option>
+                        <option value="motivation">💡 Tough Times Motivation (কঠিন সময়ের অনুপ্রেরণা)</option>
+                        <option value="custom_html">💻 Custom HTML/CSS Template (ডেভেলপার মোড)</option>
+                    </select>
                 </div>
 
+                <!-- Message Textarea -->
+                <div>
+                    <label class="block text-xs uppercase text-cyan-400 mb-1" id="messageLabel">Message</label>
+                    <textarea id="message" required rows="6" class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 resize-none font-mono text-sm" placeholder="ভবিষ্যতের নিজের উদ্দেশ্যে কিছু লিখুন..."></textarea>
+                </div>
+
+                <!-- Submit Button -->
                 <button type="submit" id="submitBtn" class="w-full neon-btn text-white font-bold py-2.5 rounded uppercase text-sm tracking-wider">
                     Lock Capsule
                 </button>
             </form>
 
+            <!-- Success Overlay Window -->
             <div id="statusOverlay" class="hidden absolute inset-0 bg-[#0a0a16] flex flex-col items-center justify-center p-4 text-center">
                 <i class="fa-solid fa-circle-check text-green-400 text-4xl mb-2 animate-bounce"></i>
                 <h3 class="text-lg font-bold text-white mb-1">CAPSULE SECURED!</h3>
@@ -59,6 +80,7 @@
         </div>
     </main>
 
+    <!-- Footer Section with Symbol Bar & Dev Credits -->
     <footer class="w-full max-w-xl mx-auto text-center my-6 space-y-2">
         <div class="text-cyan-500/40 text-xs tracking-[0.3em] font-bold">
             ⚙️ ─── 💾 ─── 🔑 ─── ⏳ ─── 🔒 ─── 🛰️
@@ -74,11 +96,11 @@
         <p class="text-[10px] text-gray-600">&copy; 2026 CSM Neural Core. All rights reserved.</p>
     </footer>
 
+    <!-- Firebase Logic & Interactivity -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Your Firebase Configuration Setup
         const firebaseConfig = {
             apiKey: "AIzaSyA6kHlmaspoUf3PqZNy7w85OPxsAK6AbZ8",
             authDomain: "sendfuture-adaa7.firebaseapp.com",
@@ -96,6 +118,41 @@
         const overlay = document.getElementById('statusOverlay');
         const statusDesc = document.getElementById('statusDesc');
         const resetBtn = document.getElementById('resetBtn');
+        const templateSelector = document.getElementById('templateSelector');
+        const messageArea = document.getElementById('message');
+        const messageLabel = document.getElementById('messageLabel');
+
+        // Professional & Smart Templates Object
+        const templates = {
+            birthday: `শুভ জন্মদিন, ভবিষ্যতের আমি! 🎉\n\nআজকে যখন তুমি এই মেইলটি পড়ছ, তখন তোমার জীবনে আরও একটি বছর যোগ হয়ে গেছে। অতীত থেকে আমি তোমাকে শুভেচ্ছা জানাচ্ছি। তুমি কি তোমার স্বপ্নগুলোর কাছাকাছি পৌঁছাতে পেরেছ? নিজের স্বাস্থ্যের যত্ন নিচ্ছ তো? মনে রেখো, আজকের এই দিনটি তোমার কঠোর পরিশ্রমের ফল। নতুন বছরের জন্য অনেক ভালোবাসা!`,
+            
+            target: `হে ভবিষ্যতের আমি, তোমার লক্ষ্য কি পূরণ হয়েছে? 🎯\n\nআমি যখন এই ক্যাপসুলটি লক করছিলাম, তখন আমার প্রধান ফোকাস এবং ক্যারিয়ার টার্গেট ছিল: [এখানে লক্ষ্যটি লিখুন]\nআজকে তুমি এই মেইলটি পড়ার সময় কি সফল (Passed) নাকি ব্যর্থ (Failed)? যদি সফল হও, তবে অতীতকে ধন্যবাদ দাও। আর যদি কোনো কারণে না হয়ে থাকে, হতাশ হয়ে থামো না—রিসেট করো এবং আবার লড়াই শুরু করো!`,
+            
+            crypto: `ইনভেস্টমেন্ট ও ফিন্যান্সিয়াল আপডেট পোর্টফোলিও 🪙\n\nহ্যালো ফিউচার সেলফ, আজকে যখন মেইলটি ওপেন করলে, তখন ক্রিপ্টো ও গ্লোবাল মার্কেটের কী অবস্থা? আমার হোল্ড করা [কয়েন/শেয়ারের নাম] এর প্রাইজ এখন কত ডলারে ট্রেড করছে? আশা করি এতদিনে আমাদের ইনভেস্টমেন্ট প্রফিটে আছে এবং তুমি ফাইনান্সিয়ালি সম্পূর্ণ ফ্রিডম উপভোগ করছ!`,
+            
+            love: `চিঠিটি আমার ভবিষ্যতের লাইফ পার্টনার বা মনের মানুষের জন্য... ❤️\n\nআজকের এই শান্ত মুহূর্তে আমি যখন এই টাইম ক্যাপসুলটি তৈরি করছি, তখন আমি ভাবছি আমাদের ভবিষ্যতের দিনগুলোর কথা। আমরা যখন একসাথে বসে এই মেইলটি রিড করব, তখন আমাদের জীবনের গল্পটা কেমন হবে? অতীত থেকে অনেক ভালোবাসা ও শ্রদ্ধা রইল আমাদের সুন্দর আগামী দিনগুলোর জন্য।`,
+            
+            motivation: `শোনো ভবিষ্যতের আমি, ভেঙে পড়ো না! 💡\n\nজীবন সবসময় একরকম যায় না। আজকে যদি তোমার সময়টা খারাপ কেটে থাকে বা তুমি চরম কোনো মেন্টাল প্রেসারে থাকো, তবে মনে করে দেখো অতীতে আমি কতটা কঠিন পথ পাড়ি দিয়ে আজকের অবস্থানে এসেছিলাম। তুমি অনেক স্ট্রং, নিজের ওপর ভরসা হারিও না। এই মেঘ কেটে যাবেই!`,
+            
+            custom_html: `<div style="padding: 20px; background: #1a1a3a; border: 2px dashed #05d5fa; border-radius: 8px; text-align: center;">\n  <h2 style="color: #05d5fa; margin-bottom: 10px;">⚡ কাস্টম ডেভেলপার মোড ⚡</h2>\n  <p style="color: #ffffff; font-size: 16px;">এখানে আপনার নিজের মতো করে সম্পূর্ণ এইচটিএমএল ডিজাইন এবং ইনলাইন সিএসএস (Inline CSS) দিয়ে চমৎকার ইমেইল টেমপ্লেট সাজিয়ে নিন।</p>\n  <span style="color: #a200ff; font-weight: bold;">— সিএসএম টাইম কোর</span>\n</div>`
+        };
+
+        // Listen for template selection change
+        templateSelector.addEventListener('change', (e) => {
+            const selectedValue = e.target.value;
+            
+            if (selectedValue === 'custom_html') {
+                messageLabel.innerHTML = 'Message <span class="text-xs text-yellow-400 lowercase">(HTML/CSS Allowed)</span>';
+            } else {
+                messageLabel.innerText = 'Message';
+            }
+
+            if (selectedValue && templates[selectedValue]) {
+                messageArea.value = templates[selectedValue];
+            } else {
+                messageArea.value = "";
+            }
+        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -105,10 +162,8 @@
             const email = document.getElementById('userEmail').value;
             const sendDate = document.getElementById('sendDate').value;
             const sendTime = document.getElementById('sendTime').value;
-            
-            // Extract only the hour part (e.g., "14:30" becomes "14") for the hourly cron system
             const sendHour = sendTime.split(':')[0]; 
-            const message = document.getElementById('message').value;
+            const message = messageArea.value;
 
             try {
                 await addDoc(collection(db, "letters"), {
@@ -116,6 +171,7 @@
                     sendDate: sendDate,
                     sendTime: sendTime,
                     sendHour: sendHour,
+                    message: message,
                     isSent: false,
                     createdAt: serverTimestamp()
                 });
@@ -131,6 +187,7 @@
 
         resetBtn.addEventListener('click', () => {
             form.reset();
+            messageLabel.innerText = 'Message';
             overlay.classList.add('hidden');
         });
     </script>
