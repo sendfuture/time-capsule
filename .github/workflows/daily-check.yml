@@ -1,10 +1,10 @@
-name: Daily Time Capsule Checker
+name: Hourly Time Capsule Checker
 
 on:
   schedule:
-    # এটি প্রতিদিন বাংলাদেশ সময় সকাল ৬:০০ টায় (UTC 00:00) অটোমেটিক রান হবে
-    - cron: '0 0 * * *'
-  workflow_dispatch: # এর মাধ্যমে আপনি এখনই ম্যানুয়ালি চেক করতে পারবেন
+    # এটি প্রতি ১ ঘণ্টা পর পর অটোমেটিক রান হবে ব্যাকএন্ডে চেক করার জন্য
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   check-and-send:
@@ -18,6 +18,9 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '20'
+
+    - name: Install Firebase Dependency
+      run: npm install firebase
 
     - name: Run Capsule Engine Script
       env:
