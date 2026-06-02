@@ -1,0 +1,26 @@
+name: Daily Time Capsule Checker
+
+on:
+  schedule:
+    # এটি প্রতিদিন বাংলাদেশ সময় সকাল ৬:০০ টায় (UTC 00:00) অটোমেটিক রান হবে
+    - cron: '0 0 * * *'
+  workflow_dispatch: # এর মাধ্যমে আপনি এখনই ম্যানুয়ালি চেক করতে পারবেন
+
+jobs:
+  check-and-send:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Run Capsule Engine Script
+      env:
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        FIREBASE_PROJECT_ID: "sendfuture-adaa7"
+      run: node cron.js
