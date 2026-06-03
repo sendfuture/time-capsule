@@ -1,19 +1,12 @@
-const express = require("express");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Firebase initialization
 if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: "sendfuture-adaa7"
-  });
+  admin.initializeApp();
 }
 const db = admin.firestore();
 
-// HTML Email Template Function
 function getThemedHTML(message, templateType) {
   let config = {
     bg: "#0a0a16", cardBg: "#0f0f23", border: "#05d5fa", text: "#ffffff",
@@ -64,14 +57,11 @@ function getThemedHTML(message, templateType) {
   `;
 }
 
-// Root Route for Cron Job
-app.get("/", async (req, res) => {
+exports.checkFutureLetters = functions.https.onRequest(async (req, res) => {
   const bdTime = new Date(new Date().getTime() + (6 * 60 * 60 * 1000));
   const todayStr = bdTime.toISOString().split('T')[0]; 
   const currentHour = String(bdTime.getUTCHours()).padStart(2, '0'); 
   const currentMinute = String(bdTime.getUTCMinutes()).padStart(2, '0'); 
-
-  console.log(`[🤖 CRON] Scanning: ${todayStr} | ${currentHour}:${currentMinute}`);
 
   try {
     const lettersRef = db.collection("letters");
@@ -93,10 +83,10 @@ app.get("/", async (req, res) => {
 
       const htmlEmailContent = getThemedHTML(mainMessage, templateType);
 
-      const response = await fetch("https://api.resend.com/emails", {
+      await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+          "Authorization": `Bearer ${functions.config().resend.key}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -107,18 +97,10 @@ app.get("/", async (req, res) => {
         })
       });
 
-      if (response.ok) {
-        await doc.ref.update({ isSent: true });
-        console.log(`Sent successfully to: ${data.email}`);
-      }
+      await doc.ref.update({ isSent: true });
     }
-    return res.status(200).send(`Processed ${snapshot.size} letters.`);
+    return res.status(200).send("Letters processed successfully.");
   } catch (error) {
     return res.status(500).send(error.message);
   }
-});
-
-// Server Listen
-app.listen(PORT, () => {
-  console.log(`Server is running beautifully on port ${PORT}`);
 });
