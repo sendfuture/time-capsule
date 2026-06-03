@@ -1,12 +1,19 @@
-const functions = require("firebase-functions");
+const express = require("express");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Firebase initialization
 if (!admin.apps.length) {
-  admin.initializeApp();
+  admin.initializeApp({
+    projectId: "sendfuture-adaa7"
+  });
 }
 const db = admin.firestore();
 
+// HTML Email Template Function
 function getThemedHTML(message, templateType) {
   let config = {
     bg: "#0a0a16", cardBg: "#0f0f23", border: "#05d5fa", text: "#ffffff",
@@ -57,11 +64,14 @@ function getThemedHTML(message, templateType) {
   `;
 }
 
-exports.checkFutureLetters = functions.https.onRequest(async (req, res) => {
+// Root Route for Cron Job
+app.get("/", async (req, res) => {
   const bdTime = new Date(new Date().getTime() + (6 * 60 * 60 * 1000));
   const todayStr = bdTime.toISOString().split('T')[0]; 
   const currentHour = String(bdTime.getUTCHours()).padStart(2, '0'); 
   const currentMinute = String(bdTime.getUTCMinutes()).padStart(2, '0'); 
+
+  console.log(`[🤖 CRON] Scanning: ${todayStr} | ${currentHour}:${currentMinute}`);
 
   try {
     const lettersRef = db.collection("letters");
@@ -83,10 +93,10 @@ exports.checkFutureLetters = functions.https.onRequest(async (req, res) => {
 
       const htmlEmailContent = getThemedHTML(mainMessage, templateType);
 
-      await fetch("https://api.resend.com/emails", {
+      const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${functions.config().resend.key}`,
+          "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -97,10 +107,16 @@ exports.checkFutureLetters = functions.https.onRequest(async (req, res) => {
         })
       });
 
-      await doc.ref.update({ isSent: true });
+      if (response.ok) {
+        await doc.ref.update({ isSent: true });
+        console.log(`Sent successfully to: ${data.email}`);
+      }
     }
-    return res.status(200).send("Letters processed successfully.");
+    return res.status(200).send(`Processed ${snapshot.size} letters.`);
   } catch (error) {
     return res.status(500).send(error.message);
   }
 });
+
+// Export for Vercel Serverless Function
+module.exports = app;
