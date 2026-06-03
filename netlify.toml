@@ -1,0 +1,6 @@
+[build]
+  functions = "netlify/functions"
+
+# এটি নেটলিফাইকে প্রতি মিনিটে আমাদের 'server' ফাংশনটি রান করতে বাধ্য করবে
+[functions.server]
+  schedule = "* * * * *"
