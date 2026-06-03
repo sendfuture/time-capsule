@@ -1,54 +1,65 @@
-const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
-// Firebase Admin initialization
-if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: "sendfuture-adaa7"
-  });
-}
-const db = admin.firestore();
-
-// API Key direct code-e
-const RESEND_API_KEY = "re_Y377Ah8u_7gfin2yU4uDY6e2GyYRBWJED"; 
-
 exports.handler = async (event, context) => {
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
-  };
-
-  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers };
-
-  try {
-    if (event.httpMethod === "POST") {
-      const data = JSON.parse(event.body);
-      
-      // Firestore-e data save kora
-      await db.collection("letters").add({
-        email: data.email,
-        sendDate: data.sendDate,
-        sendHour: String(data.sendHour).padStart(2, '0'),
-        sendMinute: String(data.sendMinute).padStart(2, '0'),
-        templateType: data.templateType,
-        message: data.message,
-        isSent: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true, message: "Capsule stored!" })
-      };
-    }
-    return { statusCode: 405, headers, body: "Method Not Allowed" };
-  } catch (error) {
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: error.message })
+    // ১. এই হেডারগুলো যেকোনো অবস্থাতেই রিটার্ন করতে হবে, নাহলে ব্রাউজার CORS এরর দিবে।
+    const headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS"
     };
-  }
+
+    // ২. ব্রাউজারের Preflight রিকোয়েস্ট বাইপাস করা
+    if (event.httpMethod === "OPTIONS") {
+        return { statusCode: 200, headers, body: "OK" };
+    }
+
+    try {
+        if (event.httpMethod === "POST") {
+            const data = JSON.parse(event.body);
+
+            // ৩. ফায়ারবেস রিয়েলটাইম ডাটাবেসের ডাইরেক্ট REST API লিংক 
+            // (এখানে sendfuture-adaa7 আপনার প্রজেক্ট আইডি। শেষে .json থাকা বাধ্যতামূলক)
+            const FIREBASE_URL = "https://sendfuture-adaa7-default-rtdb.firebaseio.com/letters.json";
+
+            const response = await fetch(FIREBASE_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: data.email,
+                    templateType: data.templateType,
+                    sendDate: data.sendDate,
+                    sendHour: data.sendHour,
+                    sendMinute: data.sendMinute,
+                    message: data.message,
+                    isSent: false,
+                    createdAt: new Date().toISOString()
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error("ফায়ারবেস ডাটাবেস রিকোয়েস্ট ব্লক করেছে: " + errText);
+            }
+
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ success: true, message: "Capsule successfully locked!" })
+            };
+        }
+        
+        return { 
+            statusCode: 405, 
+            headers, 
+            body: JSON.stringify({ success: false, error: "Method not allowed" }) 
+        };
+
+    } catch (error) {
+        // ৪. সার্ভার ক্র্যাশ করলেও ব্রাউজারকে সুন্দরভাবে হেডারসহ এরর জানাবে
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ success: false, error: error.message })
+        };
+    }
 };
