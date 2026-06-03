@@ -1,6 +1,6 @@
-const fetch = require("node-fetch");
+const https = require("https");
 
-// চমৎকার থিমড ইমেইল টেমপ্লেট জেনারেটর (মেইল পাঠানোর জন্য)
+// চমৎকার থিমড ইমেইল টেমপ্লেট জেনারেটর
 function getThemedHTML(message, templateType) {
   let config = {
     bg: "#0a0a16", cardBg: "#0f0f23", border: "#05d5fa", text: "#ffffff",
@@ -45,122 +45,163 @@ function getThemedHTML(message, templateType) {
   `;
 }
 
-// ⚠️ আপনার Resend API Key-টি সরাসরি এখানে বসিয়ে দিন
-const RESEND_API_KEY = "re_Y377Ah8u_7gfin2yU4uDY6e2GyYRBWJED"; 
-const FIREBASE_URL = "https://sendfuture-adaa7-default-rtdb.firebaseio.com/letters";
+// ⚠️ আপনার Resend API Key এবং ফায়ারবেস URL সরাসরি নিচে দেওয়া হলো
+const RESEND_API_KEY = "re_YOUR_RESEND_API_KEY_HERE";
+const FIREBASE_HOST = "sendfuture-adaa7-default-rtdb.firebaseio.com";
+
+// native https রিকোয়েস্ট হ্যান্ডলার ফাংশন (কোনো node-fetch লাগবে না)
+function makeHttpsRequest(options, bodyData = null) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let chunks = [];
+      res.on("data", (chunk) => chunks.push(chunk));
+      res.on("end", () => {
+        const resBody = Buffer.concat(chunks).toString();
+        resolve({ statusCode: res.statusCode, body: resBody });
+      });
+    });
+    req.on("error", (err) => reject(err));
+    if (bodyData) req.write(bodyData);
+    req.end();
+  });
+}
 
 exports.handler = async (event, context) => {
-    const headers = {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "POST, GET, OPTIONS"
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS"
+  };
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers, body: "OK" };
+  }
+
+  console.log(`[LOG SYSTEM ACTIVE] Received Method: ${event.httpMethod}`);
+
+  try {
+    // ----------------------------------------------------
+    // 🤖 ১. ক্রন জব (GET রিকোয়েস্ট) - চিঠি স্ক্যান এবং ইমেইল পাঠানো
+    // ----------------------------------------------------
+    if (event.httpMethod === "GET") {
+      const bdTime = new Date(new Date().getTime() + (6 * 60 * 60 * 1000));
+      const todayStr = bdTime.toISOString().split('T')[0];
+      const currentHour = String(bdTime.getUTCHours()).padStart(2, '0');
+      const currentMinute = String(bdTime.getUTCMinutes()).padStart(2, '0');
+
+      console.log(`[🤖 CRON TRIGGERED] Target Date-Time: ${todayStr} | ${currentHour}:${currentMinute}`);
+
+      // ফায়ারবেস থেকে সব চিঠি পড়া
+      const fbOptions = {
+        hostname: FIREBASE_HOST,
+        path: "/letters.json",
+        method: "GET"
+      };
+
+      const fbResponse = await makeHttpsRequest(fbOptions);
+      const letters = JSON.parse(fbResponse.body);
+
+      if (!letters) {
+        return { statusCode: 200, headers, body: "Database is empty." };
+      }
+
+      let sentCount = 0;
+
+      for (let id in letters) {
+        const letter = letters[id];
+
+        if (!letter.isSent && letter.sendDate === todayStr && String(letter.sendHour) === currentHour && String(letter.sendMinute) === currentMinute) {
+          console.log(`[MATCH FOUND] Sending email to: ${letter.email}`);
+          const htmlEmailContent = getThemedHTML(letter.message, letter.templateType);
+
+          const resendBody = JSON.stringify({
+            from: "Future Capsule <onboarding@resend.dev>",
+            to: [letter.email],
+            subject: "📬 আপনার অতীত থেকে একটি চিঠি এসেছে!",
+            html: htmlEmailContent
+          });
+
+          const resendOptions = {
+            hostname: "api.resend.com",
+            path: "/emails",
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(resendBody)
+            }
+          };
+
+          // ইমেইল পাঠানো
+          const emailRes = await makeHttpsRequest(resendOptions, resendBody);
+          console.log(`[RESEND API RESPONSE]:`, emailRes.body);
+
+          // ফায়ারবেসে স্ট্যাটাস True করা (PATCH)
+          const patchBody = JSON.stringify({ isSent: true });
+          const patchOptions = {
+            hostname: FIREBASE_HOST,
+            path: `/letters/${id}.json`,
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(patchBody)
+            }
+          };
+          await makeHttpsRequest(patchOptions, patchBody);
+
+          sentCount++;
+        }
+      }
+
+      return { statusCode: 200, headers, body: `Scan complete. Sent ${sentCount} letters.` };
+    }
+
+    // ----------------------------------------------------
+    // 📩 ২. ফর্ম সাবমিট (POST রিকোয়েস্ট) - ডাটাবেসে চিঠি সেভ করা
+    // ----------------------------------------------------
+    if (event.httpMethod === "POST") {
+      const data = JSON.parse(event.body);
+      console.log("[POST DATA RECEIVED]:", data);
+
+      const fbPostBody = JSON.stringify({
+        email: data.email,
+        templateType: data.templateType,
+        sendDate: data.sendDate,
+        sendHour: String(data.sendHour).padStart(2, '0'),
+        sendMinute: String(data.sendMinute).padStart(2, '0'),
+        message: data.message,
+        isSent: false,
+        createdAt: new Date().toISOString()
+      });
+
+      const fbPostOptions = {
+        hostname: FIREBASE_HOST,
+        path: "/letters.json",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(fbPostBody)
+        }
+      };
+
+      const saveResponse = await makeHttpsRequest(fbPostOptions, fbPostBody);
+      console.log("[FIREBASE SAVE RESPONSE]:", saveResponse.body);
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, message: "Capsule successfully locked!" })
+      };
+    }
+
+    return { statusCode: 405, headers, body: "Method Not Allowed" };
+
+  } catch (error) {
+    console.error("[SYSTEM CRITICAL ERROR]:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
     };
-
-    if (event.httpMethod === "OPTIONS") {
-        return { statusCode: 200, headers, body: "OK" };
-    }
-
-    try {
-        // ----------------------------------------------------
-        // 🤖 ১. ক্রন জব (GET রিকোয়েস্ট) - চিঠি স্ক্যান এবং ইমেইল পাঠানো
-        // ----------------------------------------------------
-        if (event.httpMethod === "GET") {
-            const bdTime = new Date(new Date().getTime() + (6 * 60 * 60 * 1000));
-            const todayStr = bdTime.toISOString().split('T')[0];
-            const currentHour = String(bdTime.getUTCHours()).padStart(2, '0');
-            const currentMinute = String(bdTime.getUTCMinutes()).padStart(2, '0');
-
-            console.log(`[🤖 CRON] Scanning for: ${todayStr} | ${currentHour}:${currentMinute}`);
-
-            // ফায়ারবেস থেকে সব চিঠি রিড করা
-            const res = await fetch(`${FIREBASE_URL}.json`);
-            const letters = await res.json();
-
-            if (!letters) {
-                return { statusCode: 200, headers, body: "Database is empty." };
-            }
-
-            let sentCount = 0;
-
-            // লুপ চালিয়ে বর্তমান সময়ের চিঠি খুঁজে বের করা
-            for (let id in letters) {
-                const letter = letters[id];
-                
-                if (!letter.isSent && letter.sendDate === todayStr && String(letter.sendHour) === currentHour && String(letter.sendMinute) === currentMinute) {
-                    
-                    const htmlEmailContent = getThemedHTML(letter.message, letter.templateType);
-
-                    // Resend API দিয়ে মেইল পাঠানো
-                    const emailResponse = await fetch("https://api.resend.com/emails", {
-                        method: "POST",
-                        headers: {
-                            "Authorization": `Bearer ${RESEND_API_KEY}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            from: "Future Capsule <onboarding@resend.dev>",
-                            to: [letter.email],
-                            subject: "📬 আপনার অতীত থেকে একটি চিঠি এসেছে!",
-                            html: htmlEmailContent
-                        })
-                    });
-
-                    const emailResult = await emailResponse.json();
-                    console.log(`Email Send Result for ${id}:`, emailResult);
-
-                    // ফায়ারবেসে স্ট্যাটাস True করে দেওয়া যেন বারবার মেইল না যায়
-                    await fetch(`${FIREBASE_URL}/${id}.json`, {
-                        method: "PATCH",
-                        body: JSON.stringify({ isSent: true })
-                    });
-
-                    sentCount++;
-                }
-            }
-
-            return { statusCode: 200, headers, body: `Scan complete. Sent ${sentCount} letters.` };
-        }
-
-        // ----------------------------------------------------
-        // 📩 ২. ফর্ম সাবমিট (POST রিকোয়েস্ট) - ডাটাবেসে চিঠি সেভ করা
-        // ----------------------------------------------------
-        if (event.httpMethod === "POST") {
-            const data = JSON.parse(event.body);
-
-            const response = await fetch(`${FIREBASE_URL}.json`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: data.email,
-                    templateType: data.templateType,
-                    sendDate: data.sendDate,
-                    sendHour: String(data.sendHour).padStart(2, '0'),
-                    sendMinute: String(data.sendMinute).padStart(2, '0'),
-                    message: data.message,
-                    isSent: false,
-                    createdAt: new Date().toISOString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error("ফায়ারবেস ডাটা সেভ করতে পারেনি।");
-            }
-
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({ success: true, message: "Capsule successfully locked!" })
-            };
-        }
-
-        return { statusCode: 405, headers, body: "Method Not Allowed" };
-
-    } catch (error) {
-        console.error("Error occurred:", error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ success: false, error: error.message })
-        };
-    }
+  }
 };
