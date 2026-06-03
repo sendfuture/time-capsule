@@ -1,250 +1,290 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSM | Time Capsule</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>CSM | Neural Time Capsule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
-        body { font-family: 'Fira Code', monospace; background-color: #0a0a16; }
-        .neon-box { box-shadow: 0 0 15px rgba(5, 213, 250, 0.2); border: 1px solid rgba(5, 213, 250, 0.3); }
-        .neon-btn { background: linear-gradient(135deg, #05d5fa 0%, #a200ff 100%); }
-        
-        /* Custom Scrollbar for Dropdowns */
-        .custom-select::-webkit-scrollbar { width: 6px; }
-        .custom-select::-webkit-scrollbar-track { background: #141432; }
-        .custom-select::-webkit-scrollbar-thumb { background: #05d5fa; border-radius: 3px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: #0a0a16;
+            color: #00ffcc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #0f0f23;
+            border: 1px solid #05d5fa;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 0 25px rgba(5, 213, 250, 0.2);
+            position: relative;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(5, 213, 250, 0.2);
+            padding-bottom: 15px;
+        }
+
+        .dots {
+            display: flex;
+            gap: 8px;
+            margin-right: 15px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+
+        .title {
+            font-size: 16px;
+            color: #05d5fa;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #a200ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: #141432;
+            border: 1px solid rgba(5, 213, 250, 0.3);
+            border-radius: 6px;
+            padding: 12px;
+            color: #ffffff;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #00ffcc;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .date-time-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #00ffcc;
+            color: #00ffcc;
+            padding: 15px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: #00ffcc;
+            color: #0a0a16;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+        }
+
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+            border-left: 4px solid;
+            line-height: 1.5;
+        }
+
+        .status-success {
+            background: rgba(39, 201, 63, 0.1);
+            border-color: #27c93f;
+            color: #27c93f;
+        }
+
+        .status-error {
+            background: rgba(255, 95, 86, 0.1);
+            border-color: #ff5f56;
+            color: #ff5f56;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 11px;
+            color: #6b7280;
+            border-top: 1px solid rgba(5, 213, 250, 0.1);
+            padding-top: 15px;
+        }
+
+        .symbol-bar {
+            color: rgba(5, 213, 250, 0.4);
+            margin-bottom: 8px;
+            letter-spacing: 0.3em;
+        }
+
+        .credit-link {
+            color: #05d5fa;
+            text-decoration: none;
+            font-weight: bold;
+        }
     </style>
 </head>
-<body class="text-gray-300 min-h-screen flex flex-col justify-between p-4">
+<body>
 
-    <header class="w-full max-w-xl mx-auto text-center my-6">
-        <h1 class="text-2xl font-bold text-cyan-400 tracking-wider"><i class="fa-solid fa-vault"></i> TIME_CAPSULE</h1>
-    </header>
-
-    <main class="w-full max-w-xl mx-auto flex-grow flex items-center">
-        <div class="neon-box bg-[#0f0f23] rounded-xl p-6 w-full relative overflow-hidden">
-            <h2 class="text-lg font-bold text-white mb-4"><i class="fa-solid fa-paper-plane text-purple-400"></i> ভবিষ্যতের কাছে চিঠি</h2>
-            
-            <form id="capsuleForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs uppercase text-cyan-400 mb-1">Target Email</label>
-                    <input type="email" id="userEmail" required class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400" placeholder="your-email@gmail.com">
-                </div>
-                
-                <div>
-                    <label class="block text-xs uppercase text-cyan-400 mb-1">Delivery Date</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <select id="customDay" required class="custom-select w-full bg-[#141432] border border-cyan-500/20 rounded px-2 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer text-sm">
-                            <option value="">Day</option>
-                        </select>
-                        <select id="customMonth" required class="custom-select w-full bg-[#141432] border border-cyan-500/20 rounded px-2 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer text-sm">
-                            <option value="">Month</option>
-                            <option value="01">January</option>
-                            <option value="02">February</option>
-                            <option value="03">March</option>
-                            <option value="04">April</option>
-                            <option value="05">May</option>
-                            <option value="06">June</option>
-                            <option value="07">July</option>
-                            <option value="08">August</option>
-                            <option value="09">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                        </select>
-                        <select id="customYear" required class="custom-select w-full bg-[#141432] border border-cyan-500/20 rounded px-2 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer text-sm">
-                            <option value="">Year</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs uppercase text-cyan-400 mb-1">Delivery Time (24h Format)</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="customHour" required class="custom-select w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer text-sm">
-                            <option value="">Hour (HH)</option>
-                        </select>
-                        <select id="customMinute" required class="custom-select w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer text-sm">
-                            <option value="">Minute (MM)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs uppercase text-cyan-400 mb-1">Select Template</label>
-                    <select id="templateSelector" class="custom-select w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer">
-                        <option value="default">-- নিজের মতো করে খালি বক্সে লিখুন --</option>
-                        <option value="birthday">🎂 Future Birthday to Me (জন্মদিনের বার্তা)</option>
-                        <option value="target">🎯 Future Target (লক্ষ্য ও ক্যারিয়ার ট্র্যাক)</option>
-                        <option value="crypto">🪙 Crypto & Wealth (ভবিষ্যতের সম্পদ ও ইনভেস্টমেন্ট)</option>
-                        <option value="love">❤️ Letter to My Future Soulmate (ভবিষ্যতের ভালোবাসার মানুষ)</option>
-                        <option value="motivation">💡 Tough Times Motivation (কঠิน সময়ের অনুপ্রেরণা)</option>
-                        <option value="custom_html">💻 Custom HTML/CSS Template (ডেভেলপার মোড)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs uppercase text-cyan-400 mb-1" id="messageLabel">Message</label>
-                    <textarea id="message" required rows="6" class="w-full bg-[#141432] border border-cyan-500/20 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400 resize-none font-mono text-sm" placeholder="ভবিষ্যতের নিজের উদ্দেশ্যে কিছু লিখুন..."></textarea>
-                </div>
-
-                <button type="submit" id="submitBtn" class="w-full neon-btn text-white font-bold py-2.5 rounded uppercase text-sm tracking-wider">
-                    Lock Capsule
-                </button>
-            </form>
-
-            <div id="statusOverlay" class="hidden absolute inset-0 bg-[#0a0a16] flex flex-col items-center justify-center p-4 text-center">
-                <i class="fa-solid fa-circle-check text-green-400 text-4xl mb-2 animate-bounce"></i>
-                <h3 class="text-lg font-bold text-white mb-1">CAPSULE SECURED!</h3>
-                <p id="statusDesc" class="text-xs text-gray-400 mb-4"></p>
-                <button id="resetBtn" class="border border-cyan-500/50 text-cyan-400 px-3 py-1 text-xs rounded">Write Another</button>
+    <div class="container">
+        <div class="terminal-header">
+            <div class="dots">
+                <div class="dot dot-red"></div>
+                <div class="dot dot-yellow"></div>
+                <div class="dot dot-green"></div>
             </div>
-        </div>
-    </main>
-
-    <footer class="w-full max-w-xl mx-auto text-center my-6 space-y-2">
-        <div class="text-cyan-500/40 text-xs tracking-[0.3em] font-bold">
-            ⚙️ ─── 💾 ─── 🔑 ─── ⏳ ─── 🔒 ─── 🛰️
-        </div>
-        
-        <div class="text-xs tracking-wide">
-            <span class="text-gray-500">Developed with 💜 by</span> 
-            <a href="https://github.com/sendfuture" target="_blank" class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-bold hover:text-cyan-300 transition-all duration-300 shadow-sm">
-                সিএসএম মহসিন আলম
-            </a>
+            <div class="title">root@csm-core:~# send-future-letter</div>
         </div>
 
-        <p class="text-[10px] text-gray-600">&copy; 2026 CSM Neural Core. All rights reserved.</p>
-    </footer>
+        <form id="timeCapsuleForm">
+            <div class="form-group">
+                <label for="email">ইউজারের ইমেইল (Target Mail)</label>
+                <input type="email" id="email" required placeholder="example@gmail.com">
+            </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+            <div class="form-group">
+                <label for="templateType">চিঠির থিম (Theming Architecture)</label>
+                <select id="templateType">
+                    <option value="default">🌐 Default Neon Engine</option>
+                    <option value="birthday">🎂 Future Birthday Core</option>
+                    <option value="love">❤️ Future Soulmate Ledger</option>
+                    <option value="crypto">🪙 Crypto & Wealth Ledger</option>
+                    <option value="target">🎯 Motivation & Target Core</option>
+                </select>
+            </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA6kHlmaspoUf3PqZNy7w85OPxsAK6AbZ8",
-            authDomain: "sendfuture-adaa7.firebaseapp.com",
-            projectId: "sendfuture-adaa7",
-            storageBucket: "sendfuture-adaa7.firebasestorage.app",
-            messagingSenderId: "284618017221",
-            appId: "1:284618017221:web:912839031a30109110a3ac"
-        };
+            <div class="date-time-row">
+                <div class="form-group">
+                    <label for="sendDate">পাঠানোর তারিখ (Date)</label>
+                    <input type="date" id="sendDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="sendTime">পাঠানোর সময় (Time)</label>
+                    <input type="time" id="sendTime" required>
+                </div>
+            </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+            <div class="form-group">
+                <label for="message">ভবিষ্যতের বার্তা (Encrypted Letter)</label>
+                <textarea id="message" required placeholder="আপনার ভবিষ্যতের জন্য কিছু লিখে রাখুন..."></textarea>
+            </div>
 
-        // UI Target Elements
-        const form = document.getElementById('capsuleForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const overlay = document.getElementById('statusOverlay');
-        const statusDesc = document.getElementById('statusDesc');
-        const resetBtn = document.getElementById('resetBtn');
-        const templateSelector = document.getElementById('templateSelector');
-        const messageArea = document.getElementById('message');
-        const messageLabel = document.getElementById('messageLabel');
+            <button type="submit" class="btn-submit">🚀 Capsule Encrypt & Save</button>
+        </form>
 
-        // Custom Dropdown Loop Elements
-        const daySelect = document.getElementById('customDay');
-        const yearSelect = document.getElementById('customYear');
-        const hourSelect = document.getElementById('customHour');
-        const minuteSelect = document.getElementById('customMinute');
+        <div id="statusBox" class="status-box"></div>
 
-        // Populate Days (01 - 31)
-        for (let i = 1; i <= 31; i++) {
-            let val = String(i).padStart(2, '0');
-            daySelect.innerHTML += `<option value="${val}">${val}</option>`;
-        }
-        // Populate Years (2026 - 2040)
-        for (let i = 2026; i <= 2040; i++) {
-            yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
-        }
-        // Populate Hours (00 - 23)
-        for (let i = 0; i < 24; i++) {
-            let val = String(i).padStart(2, '0');
-            hourSelect.innerHTML += `<option value="${val}">${val}</option>`;
-        }
-        // Populate Minutes (00 - 59)
-        for (let i = 0; i < 60; i++) {
-            let val = String(i).padStart(2, '0');
-            minuteSelect.innerHTML += `<option value="${val}">${val}</option>`;
-        }
+        <div class="footer">
+            <div class="symbol-bar">⚙️ ─── 💾 ─── 🔑 ─── ⏳ ─── 🔒 ─── 🛰️</div>
+            <p>System Maintained by <a href="https://github.com/sendfuture" target="_blank" class="credit-link">সিএসএম মহসিন আলম</a></p>
+        </div>
+    </div>
 
-        // Professional Templates Object
-        const templates = {
-            birthday: `শুভ জন্মদিন, ভবিষ্যতের আমি! 🎉\n\nআজকে যখন তুমি এই মেইলটি পড়ছ, তখন তোমার জীবনে আরও একটি বছর যোগ হয়ে গেছে। অতীত থেকে আমি তোমাকে শুভেচ্ছা জানাচ্ছি। তুমি কি তোমার স্বপ্নগুলোর কাছাকাছি পৌঁছাতে পেরেছ? নিজের স্বাস্থ্যের যত্ন নিচ্ছ তো? মনে রেখো, আজকের এই দিনটি তোমার কঠোর পরিশ্রমের ফল। নতুন বছরের জন্য অনেক ভালোবাসা!`,
-            target: `হে ভবিষ্যতের আমি, তোমার লক্ষ্য কি পূরণ হয়েছে? 🎯\n\nআমি যখন এই ক্যাপসুলটি লক করছিলাম, তখন আমার প্রধান ফোকাস এবং ক্যারিয়ার টার্গেট ছিল: [এখানে লক্ষ্যটি লিখুন]\nআজকে তুমি এই মেইলটি পড়ার সময় কি সফল (Passed) নাকি ব্যর্থ (Failed)? যদি সফল হও, তবে অতীতকে ধন্যবাদ দাও। আর যদি কোনো কারণে না হয়ে থাকে, হতাশ হয়ে থামো না—রিসেট করো এবং আবার লড়াই শুরু করো!`,
-            crypto: `ইনভেস্টমেন্ট ও ফিন্যান্সিয়াল আপডেট পোর্টফোলিও 🪙\n\nহ্যালো ফিউচার সেলফ, আজকে যখন মেইলটি ওপেন করলে, তখন ক্রিপ্টো ও গ্লোবাল মার্কেটের কী অবস্থা? আমার হোল্ড করা [কয়েন/শেয়ারের নাম] এর প্রাইজ এখন কত ডলারে ট্রেড করছে? আশা করি এতদিনে আমাদের ইনভেস্টমেন্ট প্রফিটে আছে এবং তুমি ফাইনান্সিয়ালি সম্পূর্ণ ফ্রিডম উপভোগ করছ!`,
-            love: `চিঠিটি আমার ভবিষ্যতের লাইফ পার্টনার বা মনের মানুষের জন্য... ❤️\n\nআজকের এই শান্ত মুহূর্তে আমি যখন এই টাইম ক্যাপসুলটি তৈরি করছি, তখন আমি ভাবছি আমাদের ভবিষ্যতের দিনগুলোর কথা। আমরা যখন একসাথে বসে এই মেইলটি রিড করব, তখন আমাদের জীবনের গল্পটা কেমন হবে? অতীত থেকে অনেক ভালোবাসা ও শ্রদ্ধা রইল আমাদের সুন্দর আগামী দিনগুলোর জন্য।`,
-            motivation: `শোনো ভবিষ্যতের আমি, ভেঙে পড়ো না! 💡\n\nজীবন সবসময় একরকম যায় না। আজকে যদি তোমার সময়টা খারাপ কেটে থাকে বা তুমি চরম কোনো মেন্টাল প্রেসারে থাকো, তবে মনে করে দেখো অতীতে আমি কতটা কঠিন পথ পাড়ি দিয়ে আজকের অবস্থানে এসেছিলাম। তুমি অনেক স্ট্রং, নিজের ওপর ভরসা হারিও না। এই মেঘ কেটে যাবেই!`,
-            custom_html: `<div style="padding: 20px; background: #1a1a3a; border: 2px dashed #05d5fa; border-radius: 8px; text-align: center;">\n  <h2 style="color: #05d5fa; margin-bottom: 10px;">⚡ কাস্টম ডেভেলপার মোড ⚡</h2>\n  <p style="color: #ffffff; font-size: 16px;">এখানে আপনার নিজের মতো করে সম্পূর্ণ এইচটিএমএল ডিজাইন এবং ইনলাইন সিএসএস (Inline CSS) দিয়ে চমৎকার ইমেইল টেমপ্লেট সাজিয়ে নিন।</p>\n  <span style="color: #a200ff; font-weight: bold;">— সিএসএম টাইম কোর</span>\n</div>`
-        };
-
-        // Listen for template selection change
-        templateSelector.addEventListener('change', (e) => {
-            const selectedValue = e.target.value;
-            if (selectedValue === 'custom_html') {
-                messageLabel.innerHTML = 'Message <span class="text-xs text-yellow-400 lowercase">(HTML/CSS Allowed)</span>';
-            } else {
-                messageLabel.innerText = 'Message';
-            }
-
-            if (selectedValue && templates[selectedValue]) {
-                messageArea.value = templates[selectedValue];
-            } else {
-                messageArea.value = "";
-            }
-        });
-
-        // Submit Form Handler
-        form.addEventListener('submit', async (e) => {
+    <script>
+        document.getElementById('timeCapsuleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Encrypting...";
-
-            const email = document.getElementById('userEmail').value;
             
-            // Build Date & Time from custom selectors
-            const day = document.getElementById('customDay').value;
-            const month = document.getElementById('customMonth').value;
-            const year = document.getElementById('customYear').value;
-            const sendDate = `${year}-${month}-${day}`; 
+            const statusBox = document.getElementById('statusBox');
+            const submitBtn = document.querySelector('.btn-submit');
+            
+            // ফর্ম ডেটা নেওয়া
+            const email = document.getElementById('email').value;
+            const templateType = document.getElementById('templateType').value;
+            const sendDate = document.getElementById('sendDate').value;
+            const sendTime = document.getElementById('sendTime').value;
+            const message = document.getElementById('message').value;
 
-            const sendHour = document.getElementById('customHour').value;
-            const sendMinute = document.getElementById('customMinute').value;
-            const sendTime = `${sendHour}:${sendMinute}`; 
+            // সময়কে ঘন্টা এবং মিনিটে আলাদা করা (HH, MM)
+            const [sendHour, sendMinute] = sendTime.split(':');
 
-            const templateType = templateSelector.value || "default";
-            const message = messageArea.value;
+            // সাবমিট বাটন লক করা
+            submitBtn.innerText = "⚡ ENCRYPTING & SAVING...";
+            submitBtn.disabled = true;
+            statusBox.style.display = "none";
 
             try {
-                await addDoc(collection(db, "letters"), {
-                    email: email,
-                    sendDate: sendDate,
-                    sendTime: sendTime,
-                    sendHour: sendHour,
-                    sendMinute: sendMinute,
-                    templateType: templateType, // Newly added field for backend theme recognition
-                    message: message,
-                    isSent: false,
-                    createdAt: serverTimestamp()
+                // সরাসরি আপনার নেটলিফাই ফাংশন লিঙ্কে ডাটা পাঠানো হচ্ছে
+                const response = await fetch('https://sendfuture.netlify.app/.netlify/functions/server', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email,
+                        templateType,
+                        sendDate,
+                        sendHour,
+                        sendMinute,
+                        message,
+                        isSent: false
+                    })
                 });
-                statusDesc.innerText = `চিঠিটি সেভ হয়েছে। এটি ${sendDate} তারিখে ঠিক ${sendTime} ঘটিকায় মেইলে পাঠানো হবে।`;
-                overlay.classList.remove('hidden');
-            } catch (error) {
-                alert("Error: " + error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Lock Capsule";
-            }
-        });
 
-        resetBtn.addEventListener('click', () => {
-            form.reset();
-            messageLabel.innerText = 'Message';
-            overlay.classList.add('hidden');
+                if (response.ok) {
+                    statusBox.className = "status-box status-success";
+                    statusBox.innerText = "✔ [SUCCESS]: টাইম ক্যাপসুল সফলভাবে লক করা হয়েছে! নির্দিষ্ট সময়ে মেইল পৌঁছে যাবে।";
+                    statusBox.style.display = "block";
+                    document.getElementById('timeCapsuleForm').reset();
+                } else {
+                    throw new Error("সার্ভার রেসপন্স ঠিক নেই।");
+                }
+            } catch (error) {
+                statusBox.className = "status-box status-error";
+                statusBox.innerText = "❌ [ERROR]: ডাটা সেভ করা যায়নি। আপনার নেটলিফাই ফাংশন বা ফায়ারবেস কনফিগারেশন চেক করুন।";
+                statusBox.style.display = "block";
+            } finally {
+                submitBtn.innerText = "🚀 CAPSULE ENCRYPT & SAVE";
+                submitBtn.disabled = false;
+            }
         });
     </script>
 </body>
