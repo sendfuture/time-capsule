@@ -101,20 +101,22 @@
             try {
                 const response = await fetch('https://sendfuture.netlify.app/.netlify/functions/server', {
                     method: 'POST',
-                    mode: 'cors', // CORS ব্লক ভাঙার জন্য বাধ্য করা হলো
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, templateType, sendDate, sendHour, sendMinute, message })
                 });
 
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    statusBox.className = "status-box status-success";
-                    statusBox.innerText = "✔ [SUCCESS]: টাইম ক্যাপসুল সফলভাবে লক করা হয়েছে! নির্দিষ্ট সময়ে মেইল পৌঁছে যাবে।";
-                    statusBox.style.display = "block";
-                    document.getElementById('timeCapsuleForm').reset();
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        statusBox.className = "status-box status-success";
+                        statusBox.innerText = "✔ [SUCCESS]: টাইম ক্যাপসুল সফলভাবে লক করা হয়েছে! নির্দিষ্ট সময়ে মেইল পৌঁছে যাবে।";
+                        statusBox.style.display = "block";
+                        document.getElementById('timeCapsuleForm').reset();
+                    } else {
+                        throw new Error(result.error || "ডাটাবেস সেভ এরর।");
+                    }
                 } else {
-                    throw new Error(result.error || "সার্ভার ডাটা গ্রহণ করেনি।");
+                    throw new Error("নেটওয়ার্ক রেসপন্স ঠিক নেই (CORS/Server Error)।");
                 }
             } catch (error) {
                 statusBox.className = "status-box status-error";
