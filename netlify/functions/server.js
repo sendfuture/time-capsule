@@ -116,7 +116,7 @@ exports.handler = async (event, context) => {
             
             const htmlEmailContent = getThemedHTML(letter.message, letter.templateType);
             const resendBody = JSON.stringify({
-              from: "Future Capsule <onboarding@resend.dev>",
+              from: "Future Capsule by Csm Mohasin Alam<future@mohasin.bro.bd>",
               to: [letter.email],
               subject: "📬 আপনার অতীত থেকে একটি চিঠি এসেছে!",
               html: htmlEmailContent
