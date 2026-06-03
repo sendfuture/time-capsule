@@ -46,7 +46,7 @@ function getThemedHTML(message, templateType) {
 }
 
 // ⚠️ আপনার Resend API Key এবং ফায়ারবেস URL সরাসরি নিচে দেওয়া হলো
-const RESEND_API_KEY = "re_YOUR_RESEND_API_KEY_HERE";
+const RESEND_API_KEY = "re_Y377Ah8u_7gfin2yU4uDY6e2GyYRBWJED";
 const FIREBASE_HOST = "sendfuture-adaa7-default-rtdb.firebaseio.com";
 
 // native https রিকোয়েস্ট হ্যান্ডলার ফাংশন (কোনো node-fetch লাগবে না)
