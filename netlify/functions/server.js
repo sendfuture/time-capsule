@@ -1,7 +1,7 @@
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
 
-// ফায়ারবেস অ্যাডমিন ইনিশিয়ালাইজেশন
+// ফায়ারবেস অ্যাডমিন ইনিশিয়ালাইজেশন (সার্ভিস অ্যাকাউন্ট ফাইল ছাড়াই প্রজেক্ট আইডি দিয়ে)
 if (!admin.apps.length) {
   admin.initializeApp({
     projectId: "sendfuture-adaa7"
@@ -9,7 +9,7 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 
-// চমৎকার থিমড ইমেইল টেমপ্লেট জেনারেটর
+// থিমড ইমেইল টেমপ্লেট জেনারেটর
 function getThemedHTML(message, templateType) {
   let config = {
     bg: "#0a0a16", cardBg: "#0f0f23", border: "#05d5fa", text: "#ffffff",
@@ -55,20 +55,19 @@ function getThemedHTML(message, templateType) {
 }
 
 exports.handler = async (event, context) => {
-  // শক্তিশালী CORS হেডার সেটিংস
+  // মজবুত CORS হেডার্স (যাতে ব্রাউজার কখনো ব্লক না করে)
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS"
   };
 
-  // ব্রাউজারের OPTIONS (Preflight) রিকোয়েস্ট হ্যান্ডেল করা
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, headers, body: "OK" };
   }
 
   try {
-    // ১. ক্রন জব বা গেট রিকোয়েস্ট (চিঠি স্ক্যান করে পাঠানো)
+    // ১. ক্রন জব বা গেট রিকোয়েস্ট (চিঠি স্ক্যান ও সেন্ড)
     if (event.httpMethod === "GET") {
       const bdTime = new Date(new Date().getTime() + (6 * 60 * 60 * 1000));
       const todayStr = bdTime.toISOString().split('T')[0];
@@ -115,7 +114,7 @@ exports.handler = async (event, context) => {
         await doc.ref.update({ isSent: true });
       }
 
-      return { statusCode: 200, headers, body: `Scan complete. Processed letters.` };
+      return { statusCode: 200, headers, body: "Scan complete." };
     }
 
     // ২. ফ্রন্ট-এন্ড থেকে ফর্ম সাবমিট (POST রিকোয়েস্ট)
