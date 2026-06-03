@@ -1,0 +1,14 @@
+{
+  "name": "future-capsule-backend",
+  "version": "1.0.0",
+  "description": "Render-ready backend for SendFuture",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "firebase-admin": "^12.0.0",
+    "node-fetch": "^2.7.0"
+  }
+}
