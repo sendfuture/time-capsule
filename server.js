@@ -1,9 +1,5 @@
-const express = require("express");
 const admin = require("firebase-admin");
 const fetch = require("node-fetch");
-
-const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Firebase initialization
 if (!admin.apps.length) {
@@ -13,7 +9,6 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 
-// HTML Email Template Function
 function getThemedHTML(message, templateType) {
   let config = {
     bg: "#0a0a16", cardBg: "#0f0f23", border: "#05d5fa", text: "#ffffff",
@@ -64,8 +59,7 @@ function getThemedHTML(message, templateType) {
   `;
 }
 
-// Root Route for Cron Job
-app.get("/", async (req, res) => {
+exports.handler = async (event, context) => {
   const bdTime = new Date(new Date().getTime() + (6 * 60 * 60 * 1000));
   const todayStr = bdTime.toISOString().split('T')[0]; 
   const currentHour = String(bdTime.getUTCHours()).padStart(2, '0'); 
@@ -83,7 +77,7 @@ app.get("/", async (req, res) => {
       .get();
 
     if (snapshot.empty) {
-      return res.status(200).send("No pending letters right now.");
+      return { statusCode: 200, body: "No pending letters right now." };
     }
 
     for (const doc of snapshot.docs) {
@@ -109,14 +103,10 @@ app.get("/", async (req, res) => {
 
       if (response.ok) {
         await doc.ref.update({ isSent: true });
-        console.log(`Sent successfully to: ${data.email}`);
       }
     }
-    return res.status(200).send(`Processed ${snapshot.size} letters.`);
+    return { statusCode: 200, body: `Processed ${snapshot.size} letters.` };
   } catch (error) {
-    return res.status(500).send(error.message);
+    return { statusCode: 500, body: error.message };
   }
-});
-
-// Export for Vercel Serverless Function
-module.exports = app;
+};
