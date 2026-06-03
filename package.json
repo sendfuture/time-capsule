@@ -1,13 +1,10 @@
 {
   "name": "future-capsule-backend",
   "version": "1.0.0",
-  "description": "Netlify-ready serverless backend for SendFuture",
+  "description": "Zero-dependency backend for SendFuture",
   "main": "netlify/functions/server.js",
   "scripts": {
     "start": "node netlify/functions/server.js"
   },
-  "dependencies": {
-    "firebase-admin": "^12.0.0",
-    "node-fetch": "^2.7.0"
-  }
+  "dependencies": {}
 }
