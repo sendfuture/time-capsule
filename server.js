@@ -46,7 +46,7 @@ function getThemedHTML(message, templateType) {
 }
 
 // ⚠️ আপনার Resend API Key-টি সরাসরি এখানে বসিয়ে দিন
-const RESEND_API_KEY = "re_YOUR_RESEND_API_KEY_HERE"; 
+const RESEND_API_KEY = "re_Y377Ah8u_7gfin2yU4uDY6e2GyYRBWJED"; 
 const FIREBASE_URL = "https://sendfuture-adaa7-default-rtdb.firebaseio.com/letters";
 
 exports.handler = async (event, context) => {
